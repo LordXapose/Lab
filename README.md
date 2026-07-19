@@ -1,16 +1,4 @@
-# Empire: LupinOne — Penetration Test Writeup
 
-A black-box, user-level walkthrough of the **Empire: LupinOne** machine
-([VulnHub](https://www.vulnhub.com/entry/empire-lupinone,750/)), by
-*icex64 & Empire Cybersecurity*. Recon → web enumeration → credential
-cracking → SSH foothold → **user flag**, fully documented with screenshots.
-
-> ⚠️ **Educational / lab use only.** Everything here was performed against an
-> intentionally vulnerable VM on an isolated host-only network. Do not apply
-> these techniques to systems you do not own or have explicit written
-> permission to test. The target IP is redacted as `<target ip>` throughout.
-
----
 
 ## 📂 Repository Structure
 
@@ -42,13 +30,7 @@ Empire-LupinOne-Pentest/
     └── 24-user-flag.png              # user.txt captured
 ```
 
----
-
-## 📄 The Report
-
-The full report — executive summary, scope, methodology, findings with severity
-ratings, the complete kill chain, and remediation — is in
-**[Empire-LupinOne-Report.pdf](Empire-LupinOne-Report.pdf)**.
+--
 
 ---
 
@@ -56,7 +38,6 @@ ratings, the complete kill chain, and remediation — is in
 
 | | |
 |---|---|
-| Box | Empire: LupinOne (VulnHub) |
 | Host | `<target ip>` |
 | OS | Debian 11 (Linux 5.10) |
 | Difficulty | Medium |
@@ -93,7 +74,7 @@ chmod 600 + ssh -i id_rsa icex64@<target ip>   →  shell as icex64
 
 ---
 
-## 🔑 Key Takeaways
+##  Key Takeaways
 
 - **A private key was exposed over HTTP** — encoding (Base58) is not protection.
 - **The passphrase was weak** (`fasttrack.txt`-crackable in ~1s).
@@ -102,7 +83,7 @@ chmod 600 + ssh -i id_rsa icex64@<target ip>   →  shell as icex64
 
 ---
 
-## 🧪 Full Command Walkthrough
+##  Full Command Walkthrough
 
 Every command used in the engagement, with inline comments. Replace `<target ip>`
 with the machine's actual address on your lab network.
@@ -210,7 +191,7 @@ cat user.txt
 
 ---
 
-## 🚩 Findings Summary
+##  Findings Summary
 
 | # | Finding | Severity |
 |---|---|---|
@@ -222,7 +203,7 @@ cat user.txt
 
 ---
 
-## 📚 Skills Demonstrated
+##  Skills Demonstrated
 
 Network & service enumeration · Apache *userdir* discovery · content / hidden-file
 fuzzing · encoding recognition & decoding · SSH key cracking · structured reporting
