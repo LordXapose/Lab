@@ -1,6 +1,6 @@
 
 
-## 📂 Repository Structure
+##  Repository Structure
 
 ```
 Empire-LupinOne-Pentest/
@@ -45,7 +45,7 @@ Empire-LupinOne-Pentest/
 
 ---
 
-## 🧭 Attack Chain at a Glance
+##  Attack Chain at a Glance
 
 ```
 netdiscover / nmap
@@ -69,7 +69,7 @@ ssh2john + john (fasttrack.txt)  →  passphrase: P@55w0rd!
 chmod 600 + ssh -i id_rsa icex64@<target ip>   →  shell as icex64
         │
         ▼
-      user.txt  ✅  captured
+      user.txt   captured
 ```
 
 ---
@@ -185,7 +185,7 @@ cat user.txt
 
 ---
 
-## 🛠️ Tools Used
+## Tools Used
 
 `netdiscover` · `nmap` · `ffuf` · `ssh2john` · `john` · Base58 decoder · `ssh`
 
@@ -211,4 +211,4 @@ with remediation.
 
 ---
 
-*Author: Kenil · Lab environment: Kali Linux vs. Empire: LupinOne (VMware host-only)*
+*Author: Kenil · Lab environment
