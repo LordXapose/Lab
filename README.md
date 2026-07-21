@@ -458,7 +458,7 @@ Since the card is benign, these are **identification** markers, not compromise i
 
 ## Appendix B Correction log
 
-- **Initial triage:** "NetBus trojan dropper — strongly indicated" (based on the bundled manual,
+- **Initial triage:** "NetBus trojan dropper strongly indicated" (based on the bundled manual,
   dropper-like imports, and a `12345` string).
 - **After advanced payload recovery:** **reversed** to **benign greeting card**. The archive was
   fully accounted for by three clean Director files (American Greetings / Director 4.0.4), the
