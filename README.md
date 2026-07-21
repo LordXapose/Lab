@@ -208,239 +208,263 @@ cat user.txt
 
 **Analyst:** Kenil
 **Date:** 2026-07-21
-**Sample source:** University coursework (supplied for analysis)
-**Analysis type:** Static triage (completed) + behavioural analysis plan
+**Sample source:** University coursework (folder `b/`, supplied for analysis)
+**Analysis type:** Static triage + advanced payload recovery + behavioural plan
 **Environment:** Isolated Linux sandbox — the sample was **never executed**
+
+> **Note on this revision.** An initial triage flagged this as a *likely NetBus trojan
+> dropper* based on circumstantial signals (a bundled NetBus manual, dropper-like imports,
+> and a `12345` string). **Advanced analysis — recovering and identifying every embedded
+> component — reversed that conclusion.** The corrected findings are below; the reasoning for
+> the reversal is documented so the analytic process is transparent.
 
 ---
 
 ## 1. Executive summary
 
-`GRAFFITI.exe` is a **self-extracting Trojan dropper** built around a legitimate-looking
-**Macromedia Director multimedia "greeting card."** When run it displays the lure
-*"Opening your greeting, Please wait…"*, extracts a bundled payload to disk, writes to the
-registry, and launches an executable via `ShellExecuteExA`.
+`GRAFFITI.exe` is a **benign self-extracting electronic greeting card**. It is a small 32-bit
+"grafPrf" player stub with an appended archive; when run it displays the lure
+*"Opening your greeting, Please wait…"* and unpacks a **legitimate American Greetings
+"Graffiti" e-card** built in **Macromedia Director 4.0.4 (1994)**, together with that era's
+standard Director runtime components.
 
-The package ships with the original **NetBus v1.70 manual** (`NetBus.rtf`) and two empty
-NetBus-client artefact files (`Hosts.txt`, `Memo.txt`). NetBus is a well-documented Windows
-**Remote Access Trojan (RAT)** whose server component (`Patch.exe`) installs itself for
-persistence, hides, and listens on **TCP 12345/12346** for full remote control (keylogging,
-screen capture, file access, command execution).
+Every embedded byte was recovered and identified. **No NetBus payload — or any RAT — exists
+inside `GRAFFITI.exe`.** The archive is accounted for byte-for-byte by three clean, identifiable
+Director files; the 176 KB stub is far too small to hold the ~470 KB NetBus server; the stub has
+no networking APIs to fetch one; and none of the components contain NetBus/`Patch.exe`/`KeyHook`/
+`ServerPwd` strings or a registry `Run` persistence path.
 
-**Assessment.** All static evidence is consistent with the classic "NetBus hidden inside a
-greeting card / game" distribution method. However — and this matters for an honest report —
-static analysis did **not** recover a NetBus server binary from the sample: the greeting-card
-payload is stored in Macromedia Director's proprietary compressed container and could not be
-decompressed with standard tools, and no cleartext NetBus/`Patch.exe`/`12345` indicators
-appear in the extractor. **Confirming that the RAT is actually delivered therefore requires
-dynamic/behavioural analysis** (Section 6). The classification below is stated at the
-appropriate confidence level for each claim.
+The NetBus association comes **entirely from sibling files in the `b/` folder**, not from the
+greeting card: `NetBus.rtf` (the RAT's user manual) and empty `Hosts.txt` / `Memo.txt`
+(NetBus **client** artefacts). The folder therefore reads like a **forensic evidence set** — an
+innocuous greeting card sitting alongside genuine NetBus *attacker* tooling.
 
-**Verdict:** Trojan dropper (greeting-card lure) — *NetBus RAT delivery strongly indicated,
-pending behavioural confirmation.*
+**Verdict:** `GRAFFITI.exe` — **BENIGN** (American Greetings / Macromedia Director e-card,
+self-extracting). *Not* a NetBus dropper. The NetBus tooling in the folder is separate and does
+not indicate the greeting card is trojanised.
+
+**Analytic lesson:** guilt-by-association (a NetBus manual sitting next to the file) did not
+survive verification. Classification required actually recovering the payload and confirming a
+RAT was present — it was not.
 
 ---
 
 ## 2. File identification & hashes
 
+**Container**
+
 | Property | Value |
 |---|---|
 | File name | `GRAFFITI.exe` |
 | Size | 1,306,241 bytes |
-| Type | PE32 executable (GUI), Intel 80386 — **with an appended ZIP overlay** |
+| Type | PE32 (GUI, i386) **+ appended ZIP overlay** (self-extracting) |
 | MD5 | `037356668c6da7e6a0fcc305db97e6ff` |
 | SHA-1 | `6d021798a3f4fc2406cbd3a02d1e8363ce62ed31` |
 | SHA-256 | `09c00ae65e75bc01cd018a27d718d39a4e9237bda8cbaf1fb37b1f251910e6e1` |
 | Compile timestamp | 2000-01-20 11:12:01 UTC |
-| Linker | Microsoft Visual C++ 6.0 |
-| Subsystem | GUI (2) |
+| Linker | MSVC 6.0 |
 
-The archive as delivered also contained: `Hosts.txt` (0 bytes), `Memo.txt` (0 bytes) and
-`NetBus.rtf` (22,729 bytes). The two empty text files match filenames used by the **NetBus
-client** for saved host lists / notes — i.e. the folder looks like a collected artefact set,
-not just a single sample.
+**Recovered embedded files (carved from `card.lng`)**
+
+| File | Size | MD5 | Identity |
+|---|---|---|---|
+| `fileio.dll` | 12,832 | `9f179cdc8d4c52c1b40514a53a1cc534` | Director **FileIO Xtra** (16-bit NE) |
+| `GREETING.EXE` | 1,531,622 | `15c00aad1aa877239506355b0657dde7` | **Director 4.0.4 projector** (the e-card, 16-bit NE) |
+| `LINGO.INI` | 67 | `9b538f26347a27c1f9ae3a7f2ab31744` | Director startup script (loads FileIO Xtra) |
+| `card.lng` | 1,544,728 | `a3ec3bd60ddf969debb930225256a71d` | `grafPrf` container holding the three files above |
+
+**Sibling files in `b/` (NOT part of the greeting card)**
+
+- `NetBus.rtf` (22,729 B) — the genuine **NetBus v1.70** manual (©1998, Carl-Fredrik Neikter).
+- `Hosts.txt` (0 B), `Memo.txt` (0 B) — filenames used by the **NetBus client** for saved host
+  lists / notes. Empty here.
 
 ---
 
-## 3. Structure — a nested "Russian doll"
+## 3. Structure — fully resolved
 
 ```
-GRAFFITI.exe                         PE32 stub (~176 KB, NOT packed) + appended ZIP
-  └── [ZIP overlay @ offset 176128]
-        └── card.lng                 1.54 MB — "grafPrf" container (Macromedia Director bundle)
-              ├── fileio.dll         Director "FileIO Xtra" (gives Lingo scripts file access)
-              ├── GREETING.EXE        Director projector (the multimedia greeting card)
-              └── LINGO.INI           Director configuration
+GRAFFITI.exe                         PE32 "grafPrf" player stub (~176 KB, NOT packed)
+  └── [ZIP overlay @ 0x2B008]
+        └── card.lng (1.54 MB)       "grafPrf" container
+              ├── [manifest + 126-byte greeting message]   ~207 bytes
+              ├── fileio.dll   @0x000CF  (12,832 B)   Director FileIO Xtra (NE)
+              ├── GREETING.EXE @0x032EF  (1,531,622 B) Director 4.0.4 projector (NE)
+              │     ├── GRAF472a         the Graffiti projector code
+              │     ├── DIB module       Director device-independent-bitmap DLL
+              │     ├── MACROMIX module  Director 4.0.4 sound mixer
+              │     └── XFIR movie(s)    the "GRAFFITI.DIR" Director cast/media
+              └── LINGO.INI   @0x1791D5 (67 B)        startup script
+                                                       (ends exactly at EOF ✓)
 ```
 
-Evidence for each layer:
+Key structural facts:
 
-- **PE stub + overlay.** The file starts with `MZ` (a valid PE), 4 sections, none high-entropy
-  (`.text` 6.59, `.rdata` 4.58, `.data` 4.68, `.rsrc` 3.62) → **the stub itself is not packed
-  or crypted.** The last section ends at offset 176,128; the remaining **1,130,113 bytes are an
-  overlay** — a ZIP whose End-of-Central-Directory sits at the tail (offset 1,306,219).
-- **Single appended archive.** `unzip` on the `.exe` lists exactly one member, `card.lng`.
-  Other `PK\x03\x04` byte-matches found inside the PE (offsets 0x67a6, 0x6b61, 0x21e18…) are
-  **coincidental sequences inside the extractor's x86 code**, not real ZIP headers — parsing
-  them yields impossible field values (e.g. name length 24,224). So there is **one** real
-  appended archive.
-- **grafPrf container.** `card.lng` is not a language file. Its header is the ASCII magic
-  `grafPrf` followed by a manifest listing `fileio.dll` (12,832 B), `GREETING.EXE`
-  (1,531,622 B) and `LINGO.INI` (67 B), an `end.end` delimiter, and the greeting message text
-  (*"Your dearest friend. When the going ge…"*).
-- **Macromedia Director identification.** `fileio.dll` is Director's standard **FileIO Xtra**,
-  `LINGO.INI` is Director's config, and *Lingo* is Director's scripting language. The payload's
-  entropy map shows a compressed block (~0x20000–0x90000, entropy 7.6–7.9) typical of Director
-  cast/media data. This proprietary compression is why the embedded executables cannot be
-  carved as raw PEs and why standard `zlib`/`gzip`/raw-`deflate` fail to inflate it.
+- The PE starts with a valid `MZ`, has 4 sections, **none high-entropy** (`.text` 6.59, `.rdata`
+  4.58, `.data` 4.68, `.rsrc` 3.62) → the stub is **not packed/crypted**. Bytes after the last
+  section (offset 176,128 onward, 1,130,113 B) are a ZIP overlay containing a single member,
+  `card.lng`.
+- `card.lng` is a `grafPrf` container: magic `grafPrf`, a file table
+  (`fileio.dll`/12832, `GREETING.EXE`/1531622, `LINGO.INI`/67), a 126-byte greeting message
+  (*"Your dearest friend. When the going ge…"*), then the three files stored **raw and
+  concatenated**. The offset math lands exactly on EOF — **the archive is 100% accounted for,
+  leaving no room for a hidden payload.**
+- `PK` byte-matches inside the PE and extra `MZ` matches are **coincidental** — inside the
+  extractor's x86 code and inside the Director projector's embedded runtime DLLs, respectively.
 
 ---
 
-## 4. Behavioural profile of the extractor stub (static)
+## 4. Component identification (advanced payload recovery)
 
-Imported API set (selected, from the Import Address Table):
+Each embedded file was carved at its computed offset and identified:
 
-| Capability | APIs observed | Interpretation |
-|---|---|---|
-| Locate temp / working dir | `GetTempPathA`, `GetModuleFileNameA` | chooses where to drop files |
-| Drop files to disk | `CreateFileA`, `WriteFile`, `CreateDirectoryA`, `ReadFile`, `SetFilePointer`, `FindFirstFileA/FindNextFileA`, `DeleteFileA`, `RemoveDirectoryA` | classic SFX / dropper file I/O |
-| **Write to registry** | `RegCreateKeyExA`, `RegSetValueExA`, `RegOpenKeyExA`, `RegCloseKey` | creates/sets registry values |
-| Write INI settings | `WritePrivateProfileStringA` | matches `LINGO.INI` |
-| **Execute a program** | `ShellExecuteExA` | launches an EXE after extraction |
-| UI / lure | `CreateDialogIndirectParamA`, `SetForegroundWindow`, GDI bitmap/palette calls | shows the "greeting" window |
-
-Relevant string constants recovered from the stub:
-
-- Lure: **`Opening your greeting, Please wait...`**
-- Working files: **`\card.lng`**, `\card.zip`, `\card.zzz`, `card.lngUT`
-- No cleartext `Software\…\Run`, `Patch.exe`, `NetBus`, or `12345` in the stub.
-
-**Interpretation.** The stub is a dropper: it locates a working directory, extracts the bundled
-files, writes registry/INI values, and runs an executable while showing a greeting-card lure.
-Notably there are **no networking APIs** (no WinSock/WinINet) in the stub — so any C2/network
-capability lives in the **dropped payload**, not the extractor. The absence of a plaintext
-`Run` key is consistent with NetBus, whose server (`Patch.exe`) performs **its own** persistence
-and stealth at runtime (per the bundled manual), rather than the dropper doing it.
+- **`GREETING.EXE` — American Greetings "Graffiti" e-card, Macromedia Director 4.0.4.**
+  Its own embedded source path is decisive:
+  `D:\AG\AGONLINE\AG#3\GRAFFITI.DIR` followed by the Director movie signature `XFIR`
+  (`AG`/`AGONLINE` = American Greetings Online). The projector carries standard Director strings:
+  *"Macromedia Director 4.0.4"*, *"Copyright 1985-1994 Macromedia"*, *"Projector Application"*,
+  *"MacroMix sound mixer 4.0.4"*, *"ASIPort.DLL … Copyright 1991 Altura Software"*,
+  *"OPTLOADER … Copyright 1993 SLR Systems"*. It embeds two standard runtime DLLs by module
+  name: **`DIB`** (bitmap graphics) and **`MACROMIX`** (audio) — components every Director 4
+  projector bundles.
+- **`fileio.dll` — Director FileIO Xtra** (16-bit NE). The standard library that gives Lingo
+  scripts file access.
+- **`LINGO.INI`** (complete): `-- / on startup / openxlib (the pathname & "fileio") / end startup`.
+  Benign boilerplate that loads the FileIO Xtra at startup. No drop/exec logic.
 
 ---
 
-## 5. NetBus RAT reference (from `NetBus.rtf` + threat-intel OSINT)
+## 5. Behavioural profile of the stub (static)
 
-The bundled `NetBus.rtf` is the genuine **NetBus v1.70** manual (©1998, Carl-Fredrik Neikter).
-Key facts (corroborated by Trend Micro, Microsoft, MyCERT, GIAC/SANS write-ups):
+Imports indicate a self-extractor/player: `GetTempPathA`, `CreateFileA`, `WriteFile`,
+`CreateDirectoryA`, `ReadFile`, `DeleteFileA`, `FindFirstFileA/FindNextFileA` (file I/O);
+`RegCreateKeyExA`/`RegSetValueExA`/`RegOpenKeyExA`/`RegCloseKey` (registry);
+`WritePrivateProfileStringA` (writes `LINGO.INI`); `ShellExecuteExA` (launches the card);
+dialog/GDI calls (the greeting window). Lure string: **`Opening your greeting, Please wait...`**;
+working files `\card.lng` / `\card.zip` / `\card.zzz`.
 
-- **Components:** a *client* (attacker) and a *server* = **`Patch.exe`** (victim).
-- **Install/persistence:** running `Patch.exe` installs the server so it **auto-starts every
-  Windows session** (registry `Run` key) and **hides itself** at start-up.
-- **Ports:** listens on **TCP 12345** (default) and responds on **12346**.
-- **Command-line switches:** `/noadd` (don't persist), `/remove`, `/pass:xxx`, `/port:xxx`.
-- **Capabilities:** keystroke logging ("listen for keystrokes and send them back"), screen
-  capture, send keystrokes to the active app, open/close CD-ROM, swap mouse buttons, start any
-  application, play sounds / show images, navigate the mouse, message dialogs, shutdown/logoff,
-  open arbitrary URLs, port scanner, port/application redirect, and IP-based access restriction.
-- **Weaknesses (useful for detection/attribution):** unencrypted protocol; commands are simple
-  `name;arg;arg` strings; the password is stored **in cleartext** in the registry at
-  `HKCU\Patch\Settings\ServerPwd`; there is a known auth-bypass backdoor
-  (`Password;1;<anything>`). Reference CVE: **CAN-1999-0660**. A keylogger DLL, **`KeyHook.dll`**,
-  is typically dropped in the Windows directory.
-- **Distribution:** NetBus was famously hidden inside benign-looking programs — the "Whack-A-Mole"
-  game is the textbook example; **greeting cards fit the exact same pattern** as this sample.
+Interpretation: the stub extracts `card.lng`, unpacks the three Director files, writes
+INI/registry **settings**, and `ShellExecute`s the greeting card. Notably:
 
----
+- **No networking APIs** in the stub (no WinSock/WinINet) → it cannot beacon or download.
+- **No registry `Run` / persistence path** appears as a string (`RegOpenKeyExA` and settings
+  writes only) → consistent with a player storing its own configuration, not installing autorun
+  persistence.
+- The only executable it launches is the **clean greeting card** (no other PE/NE exists to run).
 
-## 6. Behavioural / dynamic analysis plan
-
-Static triage cannot safely confirm the runtime payload, so the following should be run **in an
-isolated, disposable VM** (FLARE-VM snapshot, host-only or fake-net networking, no shared
-folders/clipboard). **Do not detonate on a real machine or a networked host.**
-
-**Lab setup**
-- Windows VM (Windows 2000/XP era matches the sample; a modern Win10 VM also works for triage).
-- Network faking: **INetSim** or **FakeNet-NG** to capture C2 without real egress.
-- Snapshot the clean state before every run.
-
-**Instrumentation to run before detonation**
-- **Procmon** (Sysinternals) — file, registry, and process activity (filter on the sample and
-  children). Watch for: files written to `%TEMP%`/`%WINDIR%`/`%SYSTEM%`, creation of
-  `Patch.exe` or `KeyHook.dll`, and any new `HKLM\...\CurrentVersion\Run` /
-  `HKCU\Patch\Settings*` values.
-- **Process Explorer / Process Hacker** — child processes spawned by `ShellExecuteExA`.
-- **Autoruns** — diff persistence entries before/after.
-- **Regshot** — snapshot-diff the registry across the run.
-- **Wireshark + INetSim/FakeNet** — watch for a listener on **TCP 12345/12346** and any outbound
-  beacon or e-mail IP-notification (NetBus can e-mail the victim IP to the attacker).
-
-**Detonation steps**
-1. Run `GRAFFITI.exe`; confirm the greeting-card window and the *"Opening your greeting…"* lure.
-2. Let the Director projector run (the malicious action in these droppers is often in the
-   **Lingo** script, which uses the FileIO Xtra to drop and then `open`/shell-exec the server).
-3. Capture every dropped file; hash them and identify PEs (expect `Patch.exe` / NetBus server,
-   possibly `KeyHook.dll`).
-4. Check for a new listening socket on **12345** (`netstat -ano`, or Wireshark). A Telnet to
-   `localhost:12345` that returns a NetBus name/version banner is a positive confirmation.
-5. Diff registry/autoruns for the persistence `Run` key and `HKCU\Patch\Settings\ServerPwd`.
-
-**Optional automated sandboxing:** submit to a **CAPE** or **Cuckoo** instance (CAPE has good
-config/keylogger extraction) and/or a reputable online sandbox for a second opinion and a
-family verdict.
-
-**Follow-up static, if a server binary is recovered:** load `Patch.exe` in Ghidra/IDA, confirm
-the `12345` bind, command dispatcher (`;`-delimited), and the `ServerPwd` registry write. Also
-worth attempting: a Director-aware tool to unpack `card.lng` and read the **Lingo** script to
-see exactly how it drops/launches the payload — this is the cleanest static confirmation.
+*(Recommended to fully pin down: disassemble the exact `RegSetValueExA` target subkey/value to
+confirm it is player configuration. No persistence string was found, so this is a completeness
+step, not an open suspicion.)*
 
 ---
 
-## 7. Indicators of Compromise (IOCs)
+## 6. Indicator verification — why the preliminary "NetBus" signals were false
 
-**Sample hashes**
+| Preliminary signal | Verdict after analysis |
+|---|---|
+| Bundled `NetBus.rtf` (RAT manual) | **Sibling file**, not inside the card. Documents NetBus generally; not evidence the card is trojanised. |
+| `Hosts.txt` / `Memo.txt` present | NetBus **client** artefacts (attacker side), empty; sibling files, not produced by the card. |
+| Dropper-like imports (`ShellExecuteExA`, reg writes) | Normal for a self-extracting **player** that unpacks and launches a Director card and stores settings. |
+| `12345` string ("NetBus port") | **False positive** — it is `123456789` (next to "bigGraffiti"/"game") and a UTF-16 `0-9` glyph list. Not a port. |
+| `\Run` / `SHELL` / `SYSTEM` / `delete` / `mReadFile` | **Lingo keyword table + font/system references** embedded in every Director projector — not active operations. |
+| `URL` matches | Case-insensitive substrings inside other words; **no actual URLs, no network Lingo**. |
+
+Absent from **all** components: `netbus`, `patch.exe`, `keyhook`, `serverpwd`, a real registry
+`Run` path, and any second embedded RAT executable.
+
+---
+
+## 7. Lingo / movie analysis
+
+The Director movie (`XFIR`) was located inside `GREETING.EXE` and scanned for malicious Lingo:
+
+- The only plaintext `on <handler>` blocks visible are **empty runtime templates** belonging to
+  the Director engine (immediately followed by debug strings like *"Loaded cast %12p"*), not the
+  card's scripts.
+- Dangerous-verb scan across the movie region: **zero** hits for `shellExecute`, `winExec`,
+  `command.com`, `cmd.exe`, `regedit`, `.reg`, `\windows\`, `system32`, `createFile`,
+  `writeString`, `gotoNetPage`, `downloadNetThing`, or `netDone`.
+- Director 4 (1994) predates network Lingo, so the movie has essentially no download/exfil
+  capability.
+
+**Limitation:** the movie's Lingo is stored compiled in the cast; it was not decompiled (that
+needs a Director-specific tool such as **ProjectorRays**). However, even compiled Lingo stores
+string **literals** as plaintext in the cast — and no suspicious literal (a payload name, a Run
+key, `command.com`, a URL) exists. Combined with the absence of any RAT binary to launch, the
+residual risk is negligible.
+
+---
+
+## 8. Forensic interpretation of the `b/` folder
+
+The folder pairs an innocuous greeting card with genuine NetBus tooling. Two consistent readings
+(the assignment context would decide which):
+
+1. **Evidence set** — the greeting card is unrelated/decoy; the actual evidence is that the
+   system's user possessed NetBus (manual + client host/memo files), i.e. was a NetBus *operator*
+   or had the client installed.
+2. **Analytic red-herring** — the exercise tests whether the analyst resists guilt-by-association
+   and correctly determines, by recovering the payload, that the greeting card is **clean**.
+
+Either way, the evidence-based finding is the same: **`GRAFFITI.exe` is a benign greeting card;
+the NetBus artefacts are separate.**
+
+---
+
+## 9. Reference — NetBus (from the bundled `NetBus.rtf`, for context only)
+
+For completeness (this describes the *sibling* tooling, not the greeting card): NetBus v1.70 is a
+Windows RAT whose server (`Patch.exe`) auto-starts each session via
+`HKLM\...\CurrentVersion\Run`, hides itself, and listens on **TCP 12345** (responds on **12346**)
+for keylogging, screen capture, file access, and remote command execution. Switches: `/noadd`,
+`/remove`, `/pass:xxx`, `/port:xxx`. Password stored in cleartext at
+`HKCU\Patch\Settings\ServerPwd`; keylogger DLL `KeyHook.dll`; auth-bypass backdoor
+(`Password;1;<any>`); ref **CAN-1999-0660**. If NetBus itself were found on a host, these are the
+IOCs to hunt — but **none of them apply to `GRAFFITI.exe`.**
+
+---
+
+## 10. Indicators (for the greeting card itself)
+
+Since the card is benign, these are **identification** markers, not compromise indicators:
+
 - `GRAFFITI.exe` SHA-256 `09c00ae65e75bc01cd018a27d718d39a4e9237bda8cbaf1fb37b1f251910e6e1`
 - `card.lng` SHA-256 `6ec98e5d01a4dbc09d7b56b705cc172a9dbaa8e547bed243b7428a73a87ebce5`
-  (MD5 `a3ec3bd60ddf969debb930225256a71d`)
-
-**File / on-disk (watch for at runtime)**
-- Bundle magic string `grafPrf`; working files `card.lng` / `card.zip` / `card.zzz`
-- Dropped `Patch.exe` (NetBus server) and/or `KeyHook.dll` (keylogger) in `%WINDIR%`/`%SYSTEM%`
-
-**Registry (NetBus)**
-- `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` — auto-start entry for the server
-- `HKCU\Patch\Settings` and `HKCU\Patch\Settings\ServerPwd` (cleartext password)
-
-**Network (NetBus)**
-- Listener on **TCP 12345**, response on **TCP 12346**; unencrypted `command;arg;arg` traffic;
-  possible outbound e-mail IP-notification.
-
-**Host string**
-- Lure text: `Opening your greeting, Please wait...`
+- Container magic string `grafPrf`; working files `card.lng` / `card.zip` / `card.zzz`
+- Lure string `Opening your greeting, Please wait...`
+- Embedded source path `D:\AG\AGONLINE\AG#3\GRAFFITI.DIR` (American Greetings attribution)
 
 ---
 
-## 8. Recommendations
+## 11. Recommendations
 
-- Treat the sample strictly as live malware: analyse only in an isolated, snapshot-restored VM.
-- For detection engineering, prioritise the **behavioural** IOCs (port 12345/12346, the `Patch`
-  registry keys, `KeyHook.dll`) over the file hash, since the dropper wrapper is trivial to
-  re-pack.
-- If this represents a real infection rather than a lab sample: isolate the host, block
-  12345/12346 at the perimeter, remove the `Run`-key persistence and dropped binaries, and rotate
-  any credentials that could have been keylogged.
+- **Classification:** treat `GRAFFITI.exe` as a benign legacy greeting-card application. It will
+  not run natively on modern 64-bit Windows (16-bit Director projector).
+- **If the `b/` folder is real evidence:** the investigative focus belongs on the NetBus
+  *tooling* (manual + client artefacts) and the host it came from — hunt the NetBus IOCs in
+  Section 9 (port 12345/12346, `HKCU\Patch\Settings*`, `KeyHook.dll`), not the greeting card.
+- **To reach 100% certainty on the card:** (a) decompile the movie's Lingo with ProjectorRays;
+  (b) detonate `GRAFFITI.exe` in an isolated Win9x/2000 VM with Procmon/Regshot/Wireshark and
+  confirm it only writes player settings and shows the card — predicted clean.
 
 ---
 
-## Appendix A Analysis limitations (for transparency)
+## Appendix A — Analysis limitations
 
-1. The greeting-card payload uses **Macromedia Director's proprietary compression**; standard
-   `zlib`/`gzip`/raw-`deflate` did not inflate it, so `GREETING.EXE`/`fileio.dll` were not
-   recovered as raw PEs and could not be statically disassembled.
-2. Consequently, **no NetBus server binary was directly extracted** from the sample by static
-   means, and no cleartext NetBus/`Patch.exe`/`12345` strings appear in the extractor. The RAT
-   attribution rests on (a) the bundled NetBus manual and client artefacts, (b) the dropper's
-   behaviour (temp extraction + registry writes + `ShellExecuteExA` + greeting lure), and (c)
-   the historical greeting-card distribution pattern — all **strongly indicative**, but
-   **behavioural analysis (Section 6) is required for definitive confirmation.**
-3. The sample was **not executed** in this environment.
+1. Static analysis only; the sample was **not executed**.
+2. The Director movie's Lingo is compiled in the cast and was **not decompiled** — though no
+   suspicious string literals exist and no RAT binary is present to launch.
+3. The stub's exact `RegSetValueExA` target was not disassembled to the instruction level; no
+   persistence (`Run`-key) string was found, so it is assessed as player configuration.
 
+## Appendix B — Correction log
 
+- **Initial triage:** "NetBus trojan dropper — strongly indicated" (based on the bundled manual,
+  dropper-like imports, and a `12345` string).
+- **After advanced payload recovery:** **reversed** to **benign greeting card**. The archive was
+  fully accounted for by three clean Director files (American Greetings / Director 4.0.4), the
+  `12345` signal was a false positive, no RAT binary or network/exec capability exists, and the
+  NetBus association is limited to unrelated sibling files.
 ---
 
 *Author: Kenil · Lab environment
