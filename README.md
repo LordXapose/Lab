@@ -245,7 +245,7 @@ not indicate the greeting card is trojanised.
 
 **Analytic lesson:** guilt-by-association (a NetBus manual sitting next to the file) did not
 survive verification. Classification required actually recovering the payload and confirming a
-RAT was present — it was not.
+RAT was present it was not.
 
 ---
 
@@ -281,7 +281,7 @@ RAT was present — it was not.
 
 ---
 
-## 3. Structure — fully resolved
+## 3. Structure fully resolved
 
 ```
 GRAFFITI.exe                         PE32 "grafPrf" player stub (~176 KB, NOT packed)
@@ -318,7 +318,7 @@ Key structural facts:
 
 Each embedded file was carved at its computed offset and identified:
 
-- **`GREETING.EXE` — American Greetings "Graffiti" e-card, Macromedia Director 4.0.4.**
+- **`GREETING.EXE` American Greetings "Graffiti" e-card, Macromedia Director 4.0.4.**
   Its own embedded source path is decisive:
   `D:\AG\AGONLINE\AG#3\GRAFFITI.DIR` followed by the Director movie signature `XFIR`
   (`AG`/`AGONLINE` = American Greetings Online). The projector carries standard Director strings:
@@ -411,7 +411,7 @@ the NetBus artefacts are separate.**
 
 ---
 
-## 9. Reference — NetBus (from the bundled `NetBus.rtf`, for context only)
+## 9. Reference NetBus (from the bundled `NetBus.rtf`, for context only)
 
 For completeness (this describes the *sibling* tooling, not the greeting card): NetBus v1.70 is a
 Windows RAT whose server (`Patch.exe`) auto-starts each session via
@@ -449,7 +449,7 @@ Since the card is benign, these are **identification** markers, not compromise i
 
 ---
 
-## Appendix A — Analysis limitations
+## Appendix A Analysis limitations
 
 1. Static analysis only; the sample was **not executed**.
 2. The Director movie's Lingo is compiled in the cast and was **not decompiled** — though no
@@ -457,7 +457,7 @@ Since the card is benign, these are **identification** markers, not compromise i
 3. The stub's exact `RegSetValueExA` target was not disassembled to the instruction level; no
    persistence (`Run`-key) string was found, so it is assessed as player configuration.
 
-## Appendix B — Correction log
+## Appendix B Correction log
 
 - **Initial triage:** "NetBus trojan dropper — strongly indicated" (based on the bundled manual,
   dropper-like imports, and a `12345` string).
