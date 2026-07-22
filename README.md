@@ -4,11 +4,11 @@
 
 ```
 Empire-LupinOne-Pentest/
-├── README.md                     # this file — project overview & structure
+├── README.md                     # this file  Project overview & structure
 ├── Empire-LupinOne-Report.pdf    # full penetration test report (PDF)
 └── images/                       # screenshots referenced by the report
-    ├── 01-target-vm-network.png      # target VM — host-only network config
-    ├── 02-kali-vm-network.png        # attacker VM — host-only network config
+    ├── 01-target-vm-network.png      # target VM host-only network config
+    ├── 02-kali-vm-network.png        # attacker VM host-only network config
     ├── 04-netdiscover.png            # host discovery
     ├── 05-nmap-quick.png             # initial nmap scan (22, 80)
     ├── 06-nmap-full.png              # full nmap -sV -sS -sC
@@ -34,7 +34,7 @@ Empire-LupinOne-Pentest/
 
 ---
 
-## 🎯 Target
+## Target
 
 | | |
 |---|---|
