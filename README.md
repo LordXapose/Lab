@@ -227,7 +227,7 @@ cat user.txt
 "Graffiti" e-card** built in **Macromedia Director 4.0.4 (1994)**, together with that era's
 standard Director runtime components.
 
-Every embedded byte was recovered and identified. **No NetBus payload or any RAT — exists
+Every embedded byte was recovered and identified. **No NetBus payload or any RAT exists
 inside `GRAFFITI.exe`.** The archive is accounted for byte-for-byte by three clean, identifiable
 Director files; the 176 KB stub is far too small to hold the ~470 KB NetBus server; the stub has
 no networking APIs to fetch one; and none of the components contain NetBus/`Patch.exe`/`KeyHook`/
@@ -235,7 +235,7 @@ no networking APIs to fetch one; and none of the components contain NetBus/`Patc
 
 The NetBus association comes **entirely from sibling files in the `b/` folder**, not from the
 greeting card: `NetBus.rtf` (the RAT's user manual) and empty `Hosts.txt` / `Memo.txt`
-(NetBus **client** artefacts). The folder therefore reads like a **forensic evidence set** — an
+(NetBus **client** artefacts). The folder therefore reads like a **forensic evidence set** an
 innocuous greeting card sitting alongside genuine NetBus *attacker* tooling.
 
 **Verdict:** `GRAFFITI.exe` **BENIGN** (American Greetings / Macromedia Director e-card,
