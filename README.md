@@ -324,9 +324,9 @@ Each embedded file was carved at its computed offset and identified:
   *"Macromedia Director 4.0.4"*, *"Copyright 1985-1994 Macromedia"*, *"Projector Application"*,
   *"MacroMix sound mixer 4.0.4"*, *"ASIPort.DLL … Copyright 1991 Altura Software"*,
   *"OPTLOADER … Copyright 1993 SLR Systems"*. It embeds two standard runtime DLLs by module
-  name: **`DIB`** (bitmap graphics) and **`MACROMIX`** (audio) — components every Director 4
+  name: **`DIB`** (bitmap graphics) and **`MACROMIX`** (audio) components every Director 4
   projector bundles.
-- **`fileio.dll` — Director FileIO Xtra** (16-bit NE). The standard library that gives Lingo
+- **`fileio.dll` Director FileIO Xtra** (16-bit NE). The standard library that gives Lingo
   scripts file access.
 - **`LINGO.INI`** (complete): `-- / on startup / openxlib (the pathname & "fileio") / end startup`.
   Benign boilerplate that loads the FileIO Xtra at startup. No drop/exec logic.
