@@ -216,11 +216,11 @@ cat user.txt
 
 ---
 
-## ⚠️ Handling notice
+## Handling notice
 
 `patch.exe` is a functional remote-access backdoor. It must never be executed on a real,
 networked, or production machine. All work documented here was performed statically in an
-isolated Linux sandbox where Windows PE binaries cannot execute — deliberate defence in depth.
+isolated Linux sandbox where Windows PE binaries cannot execute deliberate defence in depth.
 Binaries must not be committed to public source control; publish hashes and reports only.
 
 ---
@@ -230,9 +230,9 @@ Binaries must not be committed to public source control; publish hashes and repo
 1. [Executive summary](#1-executive-summary)
 2. [Scope and methodology](#2-scope-and-methodology)
 3. [Sample inventory](#3-sample-inventory)
-4. [Part 1 — GRAFFITI.exe](#4-part-1--graffitiexe)
-5. [Part 2 — patch.exe (server)](#5-part-2--patchexe-the-backdoor)
-6. [Part 2 — NetBus.exe (client)](#6-part-2--netbusexe-the-operator-console)
+4. [Part 1 GRAFFITI.exe](#4-part-1--graffitiexe)
+5. [Part 2 patch.exe (server)](#5-part-2--patchexe-the-backdoor)
+6. [Part 2 NetBus.exe (client)](#6-part-2--netbusexe-the-operator-console)
 7. [Comparative analysis](#7-comparative-analysis-client-vs-server)
 8. [Indicators of compromise](#8-indicators-of-compromise)
 9. [Detection engineering](#9-detection-engineering)
@@ -289,24 +289,24 @@ was initially suspected of being the delivery vehicle and was proven **benign**.
 
 ## 2.2 Analytical procedure
 
-1. **Identification** — magic-byte typing, size, and MD5/SHA-1/SHA-256 for threat-intel
+1. **Identification**  magic-byte typing, size, and MD5/SHA-1/SHA-256 for threat-intel
    correlation and evidential integrity.
-2. **Structural analysis** — PE header parsing, section table enumeration with characteristics
+2. **Structural analysis**  PE header parsing, section table enumeration with characteristics
    flags, per-section Shannon entropy to test for packing, and overlay detection by comparing
    the end of the last section against file size.
-3. **Compiler identification** — section naming conventions and linker version to establish the
+3. **Compiler identification** section naming conventions and linker version to establish the
    toolchain, which in turn determines which analysis techniques will be productive.
-4. **Import analysis** — full IAT enumeration, then classification of every API by capability
+4. **Import analysis** full IAT enumeration, then classification of every API by capability
    class (network, persistence, keylogging, screen capture, execution, file operations, stealth).
-5. **Resource analysis** — extraction of `RT_RCDATA` (Delphi form definitions), `RT_STRING`
+5. **Resource analysis** extraction of `RT_RCDATA` (Delphi form definitions), `RT_STRING`
    (runtime message tables), and resource-type enumeration.
-6. **Form reconstruction** — a purpose-written binary DFM decoder to recover compiled component
+6. **Form reconstruction** a purpose-written binary DFM decoder to recover compiled component
    properties as readable text. This proved to be the single highest-value technique.
-7. **String analysis** — ASCII and UTF-16LE sweeps with contextual verification of every hit.
-8. **Disassembly** — x86 disassembly with import-thunk resolution to locate exact call sites for
+7. **String analysis** ASCII and UTF-16LE sweeps with contextual verification of every hit.
+8. **Disassembly** x86 disassembly with import-thunk resolution to locate exact call sites for
    security-relevant APIs.
-9. **Payload carving** — manifest-driven offset extraction with signature validation.
-10. **Cross-binary correlation** — comparing client and server to establish roles empirically.
+9. **Payload carving** manifest-driven offset extraction with signature validation.
+10. **Cross-binary correlation** comparing client and server to establish roles empirically.
 
 ## 2.3 A note on method
 
@@ -369,7 +369,7 @@ the interpretation of the collection.
 
 ---
 
-# 4. Part 1 — `GRAFFITI.exe`
+# 4. Part 1 `GRAFFITI.exe`
 
 ## 4.1 Summary
 
@@ -379,7 +379,7 @@ initially-suspected infection vector; the analysis disproved that hypothesis.
 ## 4.2 Container structure
 
 `file` reports "Zip archive, with extra data prepended", but the first two bytes are `4D 5A`
-(`MZ`) — a valid PE. The file is therefore a **PE stub with an appended ZIP overlay**: the
+(`MZ`) a valid PE. The file is therefore a **PE stub with an appended ZIP overlay**: the
 classic self-extractor layout.
 
 ```
