@@ -733,7 +733,7 @@ end
                                       (MailTimer, retry every 60 s)
 ```
 
-**Defensive implication:** a rule blocking only TCP 12345 — the port most commonly cited for
+**Defensive implication:** a rule blocking only TCP 12345 the port most commonly cited for
 NetBus leaves the data channel, the screen channel, the dynamically-bound pivot channels, and
 the SMTP notification path fully operational.
 
