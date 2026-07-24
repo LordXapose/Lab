@@ -123,7 +123,7 @@ ffuf -u http://<target ip>/~FUZZ \
      -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt \
      -c -ic -fc 403
 
-# View the /~secret/ page — it contains a note from "icex64" saying an
+# View the /~secret/ page it contains a note from "icex64" saying an
 # SSH private key is HIDDEN in this directory and the passphrase is
 # crackable with "fasttrack". Two big hints in one message.
 curl http://<target ip>/~secret/
