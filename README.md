@@ -210,7 +210,7 @@ cat user.txt
 **Analyst:** Kenil
 **Programme:** M.Sc. Cyber Security
 **Report date:** 23 July 2026
-**Classification:** Coursework — contains live malware indicators
+**Classification:** Coursework contains live malware indicators
 **Analysis type:** Static (structural, import, resource, string, disassembly)
 **Samples executed:** None
 
@@ -464,7 +464,7 @@ D:\AG\AGONLINE\AG#3\GRAFFITI.DIR    +    XFIR (Director movie signature)
 `AG` / `AGONLINE` = **American Greetings Online**. Supporting strings include
 *"Macromedia Director 4.0.4"*, *"Copyright 1985-1994 Macromedia"*, *"Projector Application"*,
 and *"MacroMix sound mixer 4.0.4"*. Two additional embedded NE modules resolve by module name to
-**`DIB`** (device-independent bitmap graphics) and **`MACROMIX`** (audio) — standard runtime
+**`DIB`** (device-independent bitmap graphics) and **`MACROMIX`** (audio) standard runtime
 components bundled by every Director 4 projector, not hidden payloads.
 
 ## 4.5 False-positive analysis
@@ -542,7 +542,7 @@ characteristic of the era, and a sharp contrast with modern malware.
 
 Fourteen import descriptors across nine DLLs. Classified by capability:
 
-### Network / C2 — `wsock32.dll` (25 imports)
+### Network / C2 `wsock32.dll` (25 imports)
 
 ```
 WSAStartup      WSACleanup      WSAAsyncSelect  WSAGetLastError  __WSAFDIsSet
@@ -919,7 +919,7 @@ Additional forms present as separate resources:
 | `TFILEMGRFORM` | File manager |
 | `TLISTENFORM` | Keystroke listener |
 | `TKEYFORM` | Key manipulation |
-| `TSCANFORM` | **Port scanner** — locate other infected hosts |
+| `TSCANFORM` | **Port scanner** locate other infected hosts |
 | `TPORTREDIRFORM` | TCP port redirection (pivoting) |
 | `TAPPREDIRFORM` | Application I/O redirection |
 | `TSVRSETUPFORM` | Remote server configuration |
@@ -937,7 +937,7 @@ server exactly and independently corroborating the three-channel architecture.
 `NetBus.exe` is not itself a backdoor: it neither persists, nor listens, nor executes code
 locally. It is an **attack tool** whose sole purpose is to control hosts infected with
 `patch.exe`. Its presence on a system indicates that machine was used to *operate* the RAT
-rather than being a victim of it — a distinction that matters materially in an investigation.
+rather than being a victim of it a distinction that matters materially in an investigation.
 
 ---
 
@@ -987,7 +987,7 @@ the bundled documentation.
 | Settings key | `HKCU\Patch\Settings` |
 | Password value | `HKCU\Patch\Settings\ServerPwd` (**cleartext**) |
 | Keyboard-layout key | `System\CurrentControlSet\Control\Keyboard Layouts\%.8x` |
-| **Mutex** | **`NBMutex`** — highest-confidence live-infection indicator |
+| **Mutex** | **`NBMutex`** highest-confidence live-infection indicator |
 | Files | `patch.exe`, `KeyHook.dll` in `%WINDIR%` / `%SYSTEM%` |
 | Access control file | `Access.txt` (operator IP allow-list) |
 | Hidden process | Process absent from the task list via `RegisterServiceProcess` |
@@ -1232,7 +1232,7 @@ on three grounds:
 
 - a NetBus manual bundled in the same folder;
 - dropper-like imports (`ShellExecuteExA`, registry writes, temp-path resolution);
-- an apparent `12345` string — NetBus's signature port.
+- an apparent `12345` string NetBus's signature port.
 
 Each is circumstantial. Together they produced a plausible but unverified narrative.
 
@@ -1244,7 +1244,7 @@ Deeper examination overturned it:
   ending exactly at EOF. No space existed for a hidden payload.
 - All three embedded files were identified as clean Macromedia Director components, with
   American Greetings attribution from the binary's own build path.
-- The `12345` "hit" was a **false positive** — `123456789` and a UTF-16 digit-glyph list.
+- The `12345` "hit" was a **false positive** `123456789` and a UTF-16 digit-glyph list.
 - The stub imports no networking APIs, so it could not download a payload either.
 
 ### Stage 3 Confirmation
@@ -1259,7 +1259,7 @@ card was never the delivery vehicle.
 |---|---|
 | **Proximity is not evidence** | A malware manual beside a file says nothing about that file's contents. |
 | **Verify every string hit in context** | `12345` inside `123456789` is not a port. Grep produces candidates, not conclusions. |
-| **Account for all bytes** | The arithmetic proof — manifest sums to exact file size — was more conclusive than any signature scan. |
+| **Account for all bytes** | The arithmetic proof manifest sums to exact file size was more conclusive than any signature scan. |
 | **Absence of capability is evidence** | No networking imports meant no download capability, regardless of what else was suspected. |
 | **Match technique to toolchain** | Identifying Delphi is what led to DFM parsing, which produced every significant novel finding. |
 | **Documentation is a hypothesis** | The manual omitted a port and an entire exfiltration channel. |
@@ -1426,9 +1426,9 @@ strings -n 4 patch.exe | grep -iE 'netbus|mutex|mail|run|keyhook'
 
 | Source | Use |
 |---|---|
-| `NetBus.rtf` — NetBus v1.70 manual, C-F. Neikter, 1998 | Author documentation (verified against binary; found incomplete) |
+| `NetBus.rtf` NetBus v1.70 manual, C-F. Neikter, 1998 | Author documentation (verified against binary; found incomplete) |
 | CVE / CAN-1999-0660 | Vulnerability identifier for the NetBus family |
-| Borland Delphi VCL — `TReader` / `TWriter` DFM format | Basis for the custom form decoder |
+| Borland Delphi VCL `TReader` / `TWriter` DFM format | Basis for the custom form decoder |
 | Microsoft PE/COFF Specification | PE structure parsing |
 | Microsoft Win32 API documentation | API behaviour classification |
 
