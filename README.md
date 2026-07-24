@@ -76,7 +76,7 @@ chmod 600 + ssh -i id_rsa icex64@<target ip>   →  shell as icex64
 
 ##  Key Takeaways
 
-- **A private key was exposed over HTTP** — encoding (Base58) is not protection.
+- **A private key was exposed over HTTP** encoding (Base58) is not protection.
 - **The passphrase was weak** (`fasttrack.txt`-crackable in ~1s).
 - **`robots.txt` and naming conventions leaked structure**, and even a decoy narrowed the search.
 - The compromise required *every* weak link — fixing any one breaks the chain.
