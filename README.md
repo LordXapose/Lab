@@ -270,9 +270,9 @@ was initially suspected of being the delivery vehicle and was proven **benign**.
 
 | Sample | Classification |
 |---|---|
-| `patch.exe` | **MALICIOUS** — Backdoor / RAT server (`Backdoor.Win32.NetBus`) |
-| `NetBus.exe` | **HACKTOOL** — RAT operator console |
-| `GRAFFITI.exe` | **BENIGN** — Macromedia Director greeting card |
+| `patch.exe` | **MALICIOUS** Backdoor / RAT server (`Backdoor.Win32.NetBus`) |
+| `NetBus.exe` | **HACKTOOL** RAT operator console |
+| `GRAFFITI.exe` | **BENIGN**  Macromedia Director greeting card |
 
 ---
 
@@ -439,7 +439,7 @@ unallocated space in which a payload could hide.**
 | File | Size | Format | Identity |
 |---|---:|---|---|
 | `fileio.dll` | 12,832 | 16-bit NE | Macromedia Director **FileIO Xtra** |
-| `GREETING.EXE` | 1,531,622 | 16-bit NE | Director **4.0.4 projector** — the card itself |
+| `GREETING.EXE` | 1,531,622 | 16-bit NE | Director **4.0.4 projector** the card itself |
 | `LINGO.INI` | 67 | ASCII | Director startup script |
 
 `LINGO.INI` in full:
@@ -492,7 +492,7 @@ networking APIs and therefore cannot download a payload; and no NetBus artefact
 
 ---
 
-# 5. Part 2 — `patch.exe` (the backdoor)
+# 5. Part 2 `patch.exe` (the backdoor)
 
 ## 5.1 PE characteristics
 
@@ -512,7 +512,7 @@ networking APIs and therefore cannot download a payload; and no NetBus artefact
 
 The section names `CODE`, `DATA`, `BSS`, `.idata`, `.tls`, `.rdata`, `.reloc`, `.rsrc` together
 with linker version 2.25 identify **Borland Delphi**. Both binaries report an identical compile
-timestamp of **1992-06-19 22:22:17 UTC** — which predates Win32 Delphi entirely.
+timestamp of **1992-06-19 22:22:17 UTC** which predates Win32 Delphi entirely.
 
 > **This is not a real build date.** Borland's linker writes a fixed value into the PE header.
 > It must not be used for timeline reconstruction, and its appearance in two unrelated-looking
@@ -535,7 +535,7 @@ Identifying the compiler early was decisive: it is what prompted the DFM resourc
 | `.rsrc` | `0x00069000` | `0x00016200` | `0x00062A00` | `0x00016200` | 5.766 | INIT_DATA, READ |
 
 **No section exceeds entropy 7.0.** The binary is not packed, not crypted, and not obfuscated.
-This single fact is why static analysis alone recovers the complete capability set — a
+This single fact is why static analysis alone recovers the complete capability set a
 characteristic of the era, and a sharp contrast with modern malware.
 
 ## 5.4 Import analysis
@@ -555,17 +555,17 @@ gethostbyname   htons           inet_addr       inet_ntoa
 > the process opens a listening socket and accepts inbound connections. A normal application
 > that merely talks to a server needs only `connect`.
 
-### Persistence — `advapi32.dll`
+### Persistence `advapi32.dll`
 
 ```
 RegCreateKeyExA   RegSetValueExA   RegOpenKeyExA
 RegQueryValueExA  RegDeleteValueA  RegCloseKey
 ```
 
-The presence of `RegDeleteValueA` alongside the write APIs indicates **uninstall support** — a
+The presence of `RegDeleteValueA` alongside the write APIs indicates **uninstall support** a
 deliberate design feature, matching the documented `/remove` switch.
 
-### Keylogging and input injection — `user32.dll`
+### Keylogging and input injection `user32.dll`
 
 ```
 SetWindowsHookExA   GetKeyState        GetKeyboardLayout   GetKeyboardLayoutList
@@ -574,9 +574,9 @@ SetCursorPos
 ```
 
 `SetWindowsHookExA` installs the keyboard hook. `keybd_event`, `mouse_event` and `SetCursorPos`
-inject **synthetic input** — the operator can drive the victim's mouse and keyboard directly.
+inject **synthetic input** the operator can drive the victim's mouse and keyboard directly.
 
-### Screen capture — `gdi32.dll`
+### Screen capture `gdi32.dll`
 
 ```
 GetDC   GetDCEx   GetWindowDC   CreateCompatibleDC
@@ -586,7 +586,7 @@ CreateCompatibleBitmap   BitBlt   GetDIBits
 The canonical screen-capture chain: acquire a device context, create a compatible bitmap,
 `BitBlt` the screen into it, extract pixels with `GetDIBits`.
 
-### Process control and execution — `kernel32.dll` / `shell32.dll`
+### Process control and execution `kernel32.dll` / `shell32.dll`
 
 ```
 CreateProcessA   OpenProcess   OpenProcessToken   TerminateProcess
@@ -612,7 +612,7 @@ determine own path, determine the Windows directory, copy self there.
 RegisterServiceProcess   CreateMutexA   FindWindowA   ShowWindow   SetWindowLongA
 ```
 
-### Multimedia — `winmm.dll` (15 imports)
+### Multimedia `winmm.dll` (15 imports)
 
 ```
 mciSendStringA   mciSendCommandA   waveOutGetVolume   waveOutSetVolume
@@ -621,7 +621,7 @@ waveOutGetNumDevs   waveOutGetDevCapsA
 
 Supports the CD-tray and audio "prank" functions, and volume manipulation.
 
-## 5.5 Form reconstruction — the architectural blueprint
+## 5.5 Form reconstruction the architectural blueprint
 
 The highest-value artefact in this analysis. Delphi compiles form definitions into `RT_RCDATA`
 resources in a binary format (`TPF0`). Decoding `TMAINFORM2` from `patch.exe` yields the
@@ -707,7 +707,7 @@ end
 | Discovery | Detail | Why it matters |
 |---|---|---|
 | **Four+ socket channels** | `ServerSock`, `ServerSock2`, `ScreenSock`, plus redirect sockets | The architecture is multi-channel; blocking one port does not neutralise the backdoor |
-| **Purpose of TCP 12347** | `ScreenSock` — dedicated screen-capture streaming | The manual never documents this port *or* its function |
+| **Purpose of TCP 12347** | `ScreenSock` dedicated screen-capture streaming | The manual never documents this port *or* its function |
 | **Separation of concerns** | 12345 non-blocking (commands), 12346/12347 thread-blocking (bulk transfer) | Screen and file data stream on separate threads so the command channel stays responsive |
 | **`RootFolder = 'C:'` with `fiRecurseFolders`** | Recursive enumeration of the entire system drive | Full-filesystem reconnaissance is a pre-configured default, not an operator action |
 | **`MailTimer.Interval = 60000`** | 60-second cadence | The infection notification **retries every minute** until it succeeds |
@@ -734,7 +734,7 @@ end
 ```
 
 **Defensive implication:** a rule blocking only TCP 12345 — the port most commonly cited for
-NetBus — leaves the data channel, the screen channel, the dynamically-bound pivot channels, and
+NetBus leaves the data channel, the screen channel, the dynamically-bound pivot channels, and
 the SMTP notification path fully operational.
 
 ## 5.7 Persistence
@@ -743,7 +743,7 @@ Confirmed at three independent levels of evidence:
 
 1. **String:** `\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` present in `CODE`.
 2. **Imports:** `RegCreateKeyExA`, `RegSetValueExA`, `RegDeleteValueA`.
-3. **Disassembly:** call sites clustered in a single routine region —
+3. **Disassembly:** call sites clustered in a single routine region
 
 ```
 0x0043F82B   call RegCreateKeyExA     ; open/create the Run key
@@ -842,7 +842,7 @@ network-based detection straightforward and reliable (§9.2).
 | Switch | Documented behaviour |
 |---|---|
 | `/noadd` | Run without installing persistence |
-| `/remove` | Uninstall — remove persistence and exit |
+| `/remove` | Uninstall remove persistence and exit |
 | `/pass:xxx` | Set the server password |
 | `/port:xxx` | Override the listening port |
 
@@ -856,13 +856,13 @@ Relevant to incident response, because they aid both attribution and recovery:
 |---|---|
 | Password stored **in cleartext** at `HKCU\Patch\Settings\ServerPwd` | Recoverable during forensics; identifies the operator's chosen key |
 | No transport encryption | Full session reconstruction from a packet capture |
-| Known authentication bypass (`Password;1;<any>`) | Third parties could hijack infected hosts — a compromised host may have had *multiple* uninvited controllers |
+| Known authentication bypass (`Password;1;<any>`) | Third parties could hijack infected hosts a compromised host may have had *multiple* uninvited controllers |
 | Fixed default ports | Trivial network detection |
 | Reference identifier | **CAN-1999-0660** |
 
 ---
 
-# 6. Part 2 — `NetBus.exe` (the operator console)
+# 6. Part 2 `NetBus.exe` (the operator console)
 
 ## 6.1 PE characteristics
 
@@ -948,13 +948,13 @@ The cleanest empirical proof of the two roles is the import asymmetry:
 | Capability | `patch.exe` (server) | `NetBus.exe` (client) | Interpretation |
 |---|---|---|---|
 | **Socket role** | `bind`, `listen`, `accept` | `connect` only | Server listens; client dials out |
-| **Process creation** | `CreateProcessA` | — absent — | Only the server executes code |
-| **Process termination** | `TerminateProcess`, `OpenProcess` | — absent — | Only the server kills processes |
-| **Input injection** | `keybd_event`, `mouse_event`, `SetCursorPos` | — absent — | Only the server injects input |
-| **System shutdown** | `ExitWindowsEx` | — absent — | Only the server can shut down |
-| **File deletion** | `DeleteFileA`, `CopyFileA` | — absent — | Only the server modifies the filesystem |
+| **Process creation** | `CreateProcessA` | absent | Only the server executes code |
+| **Process termination** | `TerminateProcess`, `OpenProcess` | absent | Only the server kills processes |
+| **Input injection** | `keybd_event`, `mouse_event`, `SetCursorPos` |  absent | Only the server injects input |
+| **System shutdown** | `ExitWindowsEx` | absent | Only the server can shut down |
+| **File deletion** | `DeleteFileA`, `CopyFileA` | absent | Only the server modifies the filesystem |
 | **Persistence** | `RegSetValueExA` + `RegDeleteValueA` | `RegSetValueExA` only | Server installs/uninstalls; client stores its own settings |
-| **Process hiding** | `RegisterServiceProcess` | — absent — | Only the server hides |
+| **Process hiding** | `RegisterServiceProcess` | absent | Only the server hides |
 | **Multimedia** | 15 `winmm` imports | 2 `winmm` imports | Server performs actions; client merely requests them |
 | **Screen capture** | Full GDI chain | Partial (display only) | Server captures; client renders |
 
@@ -1017,7 +1017,7 @@ Process is already active
 
 # 9. Detection engineering
 
-## 9.1 YARA — file-based
+## 9.1 YARA file-based
 
 Built on recovered behavioural artefacts rather than a file hash, so recompiled or repacked
 variants remain detectable.
@@ -1081,7 +1081,7 @@ rule NetBus_Delphi_Form_Ports
 }
 ```
 
-## 9.2 Snort / Suricata — network-based
+## 9.2 Snort / Suricata network-based
 
 Because the protocol is unencrypted, network detection is highly reliable.
 
@@ -1131,7 +1131,7 @@ Static analysis has produced a complete capability model. Dynamic analysis shoul
 
 | Requirement | Specification |
 |---|---|
-| Guest OS | Windows 98 or Windows 2000 — matches the target era |
+| Guest OS | Windows 98 or Windows 2000 matches the target era |
 | Networking | Host-only, with INetSim or FakeNet-NG; **no route to the internet** |
 | Isolation | No shared folders, no shared clipboard, no USB passthrough |
 | Recovery | Clean snapshot taken before every run |
@@ -1157,16 +1157,16 @@ Static analysis has produced a complete capability model. Dynamic analysis shoul
 1. Snapshot the clean guest; capture Regshot and Autoruns baselines.
 2. Start all instrumentation. Confirm the SMTP responder is listening.
 3. Execute `patch.exe`. Record the process tree.
-4. **Verify persistence** — expect a new value under `HKLM\...\CurrentVersion\Run`.
-5. **Verify self-installation** — expect a copy of the binary in `%WINDIR%` (predicted from
+4. **Verify persistence** expect a new value under `HKLM\...\CurrentVersion\Run`.
+5. **Verify self-installation** expect a copy of the binary in `%WINDIR%` (predicted from
    `GetWindowsDirectoryA` → `CopyFileA` at `0x4557AB` / `0x00455C9E`).
-6. **Verify the mutex** — expect `NBMutex` in Process Explorer's handle view.
-7. **Verify the listeners** — expect TCP 12345, 12346 **and 12347**. Confirming 12347 validates
+6. **Verify the mutex** expect `NBMutex` in Process Explorer's handle view.
+7. **Verify the listeners** expect TCP 12345, 12346 **and 12347**. Confirming 12347 validates
    the form-reconstruction finding, which is the report's principal novel claim.
-8. **Verify the keylogger** — expect `KeyHook.dll` written to disk and loaded as a module.
-9. **Verify SMTP notification** — expect a connection to TCP 25 carrying
+8. **Verify the keylogger** expect `KeyHook.dll` written to disk and loaded as a module.
+9. **Verify SMTP notification** expect a connection to TCP 25 carrying
    `Subject: NetBus server is up and running`, repeating at 60-second intervals.
-10. **Verify uninstallation** — run with `/remove` and re-diff; this validates §11.
+10. **Verify uninstallation** run with `/remove` and re-diff; this validates §11.
 11. Diff registry and autoruns; export all artefacts.
 12. Optionally submit to CAPE or Cuckoo for an independent family verdict.
 
@@ -1193,7 +1193,7 @@ confirmation exercise:
 ## 11.1 Immediate containment
 
 1. **Isolate the host** from the network before any interactive work.
-2. **Capture volatile memory** if the infection is live — the cleartext password and any
+2. **Capture volatile memory** if the infection is live the cleartext password and any
    active session data reside in memory.
 3. **Block TCP 12345–12347** inbound and outbound at the perimeter.
 4. **Alert on outbound SMTP** from hosts that have no business sending mail.
@@ -1219,12 +1219,12 @@ confirmation exercise:
 
 ---
 
-# 12. Analytical narrative — how the conclusion changed
+# 12. Analytical narrative how the conclusion changed
 
 This section is included deliberately. The reasoning path is as instructive as the result, and
 documenting a corrected hypothesis is a professional obligation.
 
-### Stage 1 — Initial triage (incorrect)
+### Stage 1 Initial triage (incorrect)
 
 The first sample set contained `GRAFFITI.exe` alongside `NetBus.rtf`, `Hosts.txt` and
 `Memo.txt`. Triage assessed `GRAFFITI.exe` as *"likely NetBus dropper — strongly indicated"*,
@@ -1236,7 +1236,7 @@ on three grounds:
 
 Each is circumstantial. Together they produced a plausible but unverified narrative.
 
-### Stage 2 — Advanced analysis (reversal)
+### Stage 2 Advanced analysis (reversal)
 
 Deeper examination overturned it:
 
@@ -1247,7 +1247,7 @@ Deeper examination overturned it:
 - The `12345` "hit" was a **false positive** — `123456789` and a UTF-16 digit-glyph list.
 - The stub imports no networking APIs, so it could not download a payload either.
 
-### Stage 3 — Confirmation
+### Stage 3 Confirmation
 
 The actual `patch.exe` and `NetBus.exe` were subsequently supplied as separate files, which
 independently confirmed the revised reading: the collection is a **toolkit**, and the greeting
@@ -1289,7 +1289,7 @@ card was never the delivery vehicle.
 
 # 14. Appendices
 
-## Appendix A — Import summary
+## Appendix A Import summary
 
 ### `patch.exe`
 
@@ -1321,7 +1321,7 @@ card was never the delivery vehicle.
 | `comdlg32.dll` | 2 |
 | `shell32.dll` | 2 |
 
-## Appendix B — Annotated call-site map (`patch.exe`)
+## Appendix B Annotated call-site map (`patch.exe`)
 
 Resolved by locating `FF 25` import thunks and the `E8 rel32` calls targeting them.
 428 import thunks were resolved in total.
@@ -1356,14 +1356,14 @@ Import thunk addresses:
 0x0043FF88  ShellExecuteA
 ```
 
-## Appendix C — Full decoded server form
+## Appendix C Full decoded server form
 
 See §5.5 for the complete `TMAINFORM2` reconstruction, produced with a purpose-written binary
 DFM decoder implementing Delphi's `TValueType` encoding (`vaInt8=2`, `vaInt16=3`, `vaInt32=4`,
 `vaString=6`, `vaIdent=7`, `vaFalse=8`, `vaTrue=9`, `vaSet=11`, `vaLString=12`, …) and
 `TReader.ReadPrefix` semantics (a flags byte is present only when its high nibble is `0xF`).
 
-## Appendix D — Malware-specific strings (VCL boilerplate excluded)
+## Appendix D Malware-specific strings (VCL boilerplate excluded)
 
 ```
 NetBus 1.70
@@ -1391,7 +1391,7 @@ JPEG error #%d
 Cannot change the size of a JPEG image
 ```
 
-## Appendix E — Reproduction
+## Appendix E Reproduction
 
 ```bash
 pip install pefile capstone --break-system-packages
@@ -1422,7 +1422,7 @@ strings -n 4 patch.exe | grep -iE 'netbus|mutex|mail|run|keyhook'
 > conversion table. The ports are `int16` properties inside DFM resources and are recoverable
 > only via step 4. This is the report's central methodological point.
 
-## Appendix F — References
+## Appendix F References
 
 | Source | Use |
 |---|---|
@@ -1435,6 +1435,3 @@ strings -n 4 patch.exe | grep -iE 'netbus|mutex|mail|run|keyhook'
 ---
 
 **End of report.**
-
-*Prepared for M.Sc. Cyber Security coursework. Contains live malware indicators — handle in
-accordance with §Handling notice.*
